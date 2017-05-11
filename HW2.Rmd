@@ -1,0 +1,138 @@
+---
+title: "HW2"
+author: "MelainaWright"
+date: "May 9, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r loadpackage, results='hide', message=FALSE}
+
+library(tidyverse)
+
+library(tibble)
+
+library(readr)
+
+```
+
+
+#Import and Tidy
+
+```{r ImportAndTidy, echo=TRUE, eval=TRUE}
+
+#Read the gazetteer data as-is (all columns; no type conversion) into a gaz_raw tibble.
+gaz_raw <-read_csv("CA_Features_20170401.zip")
+
+#unzipped it but is not deliminated correctly
+gaz_raw <- read_delim("CA_Features_20170401.zip", delim="|")
+
+
+
+# Copy only the following columns into a gaz tibble (you can rename them if you like):
+# feature ID
+# feature name
+# feature class
+# state alpha
+# county name
+# primary latitude (decimal)
+# primary longitude (decimal)
+# source latitude (decimal)
+# source longitude (decimal)
+# elevation in meters
+# map name
+# date created
+# date edited
+
+gaz <- select(gaz_raw, FEATURE_ID, FEATURE_NAME, FEATURE_CLASS, STATE_ALPHA, PRIM_LAT_DEC, PRIM_LONG_DEC, SOURCE_LAT_DEC, SOURCE_LONG_DEC, ELEV_IN_M, MAP_NAME, DATE_CREATED, DATE_EDITED)
+
+
+
+# Convert the gaz columns to the appropriate type.
+# Parsed with column specification:
+# cols( 
+#   .default = col_character(), -> thinks date created and date edited are characters, should be dates
+#   FEATURE_ID = col_integer(), 
+#   PRIM_LAT_DEC = col_double(),
+#   PRIM_LONG_DEC = col_double(),
+#   SOURCE_LAT_DEC = col_double(),
+#   SOURCE_LONG_DEC = col_double(),
+#   ELEV_IN_M = col_integer(),
+#   ELEV_IN_FT = col_integer()
+# )
+
+gaz$DATE_CREATED = as.Date(gaz$DATE_CREATED, "%m/%d/%Y")
+
+gaz$DATE_EDITED = as.Date(gaz$DATE_EDITED, "%m/%d/%Y")
+
+
+
+#Convert any placeholders for unknown data to NA
+gaz$MAP_NAME <- parse_character(gaz$MAP_NAME, na="Unknown") 
+
+gaz$PRIM_LAT_DEC <- parse_character(gaz$PRIM_LAT_DEC, na="0") 
+
+gaz$PRIM_LONG_DEC <- parse_character(gaz$PRIM_LONG_DEC, na="0") 
+
+ 
+ 
+# Delete from gaz rows where:
+# the primary latitude or longitude are unknown -> delete NA
+gaz <- filter(gaz, !PRIM_LAT_DEC == "NA")
+gaz <- filter(gaz, !PRIM_LONG_DEC == "NA")
+
+
+
+#Delete from gaz rows where:
+# the feature is not in California -> only select CA
+gaz <- filter(gaz, STATE_ALPHA == "CA")
+
+
+
+# Write the gaz tibble to a CSV files (using "|" as a delimiter)
+write.table(gaz, "gaz.csv", sep="|")
+
+
+```
+
+
+#Analyze
+##Most-Frequently-Occuring Feature Name
+``` {r Analyze, echo=TRUE, eval=TRUE}
+
+# Create R code snippets that answer the following questions about California:
+# What is the most-frequently-occuring feature name?
+
+
+
+```
+
+#Least-Frequently-Occuring Feature Class
+``` {r Analyze, echo=TRUE, eval=TRUE}
+
+# What is the least-frequently-occuring feature class?
+
+
+```
+
+#Approximate Center Point of Each County
+``` {r Analyze, echo=TRUE, eval=TRUE}
+
+# What is the approximate center point of each county?
+# Hint: Calculate the center of the bounding box of the county’s point features.
+
+
+```
+
+#Fraction of Total Number of Features in Each Country that are Natural and that are Man-Made
+``` {r Analyze, echo=TRUE, eval=TRUE}
+
+# What are the fractions of the total number of features in each county that are natural? man-made?
+# Hint: Construct a tibble with two columns, one containing all possible feature classes (see “Feature Class Definitions”), and another containing the string “natural” or “man-made”, which you assign (it’s pretty obvious.) Then join this tibble to the gazetteer tibble.
+
+
+```
+
