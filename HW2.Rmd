@@ -20,7 +20,7 @@ library(readr)
 ```
 
 
-#Import and Tidy
+#Import
 
 ```{r ImportAndTidy, echo=TRUE, eval=TRUE}
 
@@ -30,8 +30,11 @@ gaz_raw <-read_csv("CA_Features_20170401.zip")
 #unzipped it but is not deliminated correctly
 gaz_raw <- read_delim("CA_Features_20170401.zip", delim="|")
 
+```
 
+#Tidy
 
+```{r Tidy, echo=TRUE, eval=TRUE}
 # Copy only the following columns into a gaz tibble (you can rename them if you like):
 # feature ID
 # feature name
@@ -47,7 +50,7 @@ gaz_raw <- read_delim("CA_Features_20170401.zip", delim="|")
 # date created
 # date edited
 
-gaz <- select(gaz_raw, FEATURE_ID, FEATURE_NAME, FEATURE_CLASS, STATE_ALPHA, PRIM_LAT_DEC, PRIM_LONG_DEC, SOURCE_LAT_DEC, SOURCE_LONG_DEC, ELEV_IN_M, MAP_NAME, DATE_CREATED, DATE_EDITED)
+gaz <- select(gaz_raw, FEATURE_ID, FEATURE_NAME, FEATURE_CLASS, STATE_ALPHA, COUNTY_NAME, PRIM_LAT_DEC, PRIM_LONG_DEC, SOURCE_LAT_DEC, SOURCE_LONG_DEC, ELEV_IN_M, MAP_NAME, DATE_CREATED, DATE_EDITED)
 
 
 
@@ -77,7 +80,12 @@ gaz$PRIM_LAT_DEC <- parse_character(gaz$PRIM_LAT_DEC, na="0")
 
 gaz$PRIM_LONG_DEC <- parse_character(gaz$PRIM_LONG_DEC, na="0") 
 
- 
+#revert back to numeric after using parse_character
+gaz$PRIM_LAT_DEC <- as.numeric(gaz$PRIM_LAT_DEC)
+
+gaz$PRIM_LONG_DEC <- as.numeric(gaz$PRIM_LONG_DEC)
+
+
  
 # Delete from gaz rows where:
 # the primary latitude or longitude are unknown -> delete NA
@@ -106,7 +114,12 @@ write.table(gaz, "gaz.csv", sep="|")
 # Create R code snippets that answer the following questions about California:
 # What is the most-frequently-occuring feature name?
 
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
 
+Mode(gaz$FEATURE_NAME)
 
 ```
 
@@ -115,6 +128,12 @@ write.table(gaz, "gaz.csv", sep="|")
 
 # What is the least-frequently-occuring feature class?
 
+UnMode <- function(x) {
+  ux <- unique(x)
+  ux[which.min(tabulate(match(x, ux)))]
+}
+
+UnMode(gaz$FEATURE_CLASS)
 
 ```
 
@@ -123,6 +142,26 @@ write.table(gaz, "gaz.csv", sep="|")
 
 # What is the approximate center point of each county?
 # Hint: Calculate the center of the bounding box of the county’s point features.
+
+gaz <- filter(gaz, !COUNTY_NAME == "NA")
+
+ucounties <- unique(gaz$COUNTY_NAME)
+
+CountyCenter <- function(county, dataframe) {
+  points = subset(gaz, COUNTY_NAME == county)
+  latmin = min(points$PRIM_LAT_DEC)
+  latmax = max(points$PRIM_LAT_DEC)
+  longmin = min(points$PRIM_LONG_DEC)
+  longmax = max(points$PRIM_LONG_DEC)
+  centerpoint = c((latmin+latmax)/2, (longmin+longmax)/2)
+  return(centerpoint)
+}
+
+
+for(county in ucounties) {
+  cp = CountyCenter(county,gaz)
+  print(cp)
+}
 
 
 ```
